@@ -1,0 +1,36 @@
+#Jenkins con docker Run
+1) Crear un newtworknamespace para la red de Jenkins
+    docker network create jenkins
+
+
+2) Ejecutar contenedor usando el newtworknamespace, puerto 8080 para el ingreso a la GUI y ejecución de comandos para obtener la contraseña de admin
+    docker run --name jenkins-capa --restart=on-failure -d --network jenkins --volume jenkins-data:/var/jenkins_home -p 8080:8080 jenkins/jenkins
+    docker exec -it jenkins-capa sh 
+        cat /var/jenkins_home/secrets/initialAdminPassword
+
+3)
+ Creación de un agente (nodo) para realizar ejecuciones
+
+
+#Jenkins con docker compose
+ver ruta dockerfile-edit/jenkins.yml
+
+
+#Crear un contenedor para usar como nodo
+Luego de ejecutar el docker compose usamos los siguientes comandos:
+docker exec -it ${id/nombre del contenedor} bash
+1) Vamos a la ruta Home la cual mapeamos en el volumne cd /var/jenkins_home
+2) Generamos private key y public key para la conexión ssh  ssh-keygen -t rsa -f jenkins_agnt
+3) Vamos a Jenkins en manage-jenkins - manage credentials - jenkins - global credentials - add credentials
+    1) Seleccionamos SSH Username with private key
+    2) id: ${credentialsName}
+    3) Enter directly  - Pegamos la ${PUB} que generamos en el paso 1) y guardamos
+4) Vamos a Manage Jenkins - Manage Nodes and cloud - new Node
+5)  Datos para crear el nodo
+    1) Nombre que le daremos al agent
+    2) Remote Directory: Debemos ir al contenedor que usaremos como agente y damos pwd con eso tenedremos el home
+    3) Usage: Use This node as much as possible
+    4) Metodo de lanzamiento: Launch agents via SSH
+    5) credentials: ${credentialsName}
+    6) Debemos configurar el java path del nodo que usaremos como agente. Nota: Debemos tener en cuenta las versiones de java y ver que sí sean compatibles
+    7) Guardamos y revisamos los logs del agente que sí se pueda conectar, de no tener conexión debemos revisar el error.
